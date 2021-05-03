@@ -2,14 +2,13 @@
 
 Nome do grupo: 
 
-____________
+PI_Igual_5
 
 Nome dos integrantes: 
 
-* pessoa 1
-* pessoa 2
-* pessoa 3
-* pessoa 4
+* Arthur Gomes Chieppe
+* Francisco Augusto Buzolin Vasconcellos da Costa
+* Gabriel Vilaça
 
 
 Visite sempre o enunciado abaixo para atualizacões: 
