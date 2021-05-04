@@ -37,13 +37,13 @@ centro = []
 atraso = 1.5E9 # 1 segundo e meio. Em nanossegundos
 centro_robo = ()
 
-v = 0.2
-w = math.pi/10.0
+v = 0.1
+w = math.pi/20.0
 
 zero = Twist(Vector3(0,0,0), Vector3(0,0,0.0))
 frente = Twist(Vector3(v,0,0), Vector3(0,0,0.0))
 direita = Twist(Vector3(0,0,0), Vector3(0,0, -w ))
-esquerda = Twist(Vector3(v,0,0), Vector3(0,0,w))
+esquerda = Twist(Vector3(0,0,0), Vector3(0,0,w))
 
 area = 0.0 # Variavel com a area do maior contorno
 
@@ -99,19 +99,24 @@ def roda_todo_frame(imagem):
         print('ex', e)
 
 def segue_linha():
-    if len(centro) != 0 and len(centro_robo) != 0:
-        velocidade_saida.publish(zero)
+    limiar = 30
+    velocidade_saida.publish(zero)
 
-        if (centro[0] < centro_robo[0]+14)and(centro[0] > centro_robo[0]-14):
-            velocidade_saida.publish(frente)
-        
-        elif (centro[0] > centro_robo[0]):
-            velocidade_saida.publish(direita)
-        
-        elif (centro[0] < centro_robo[0]):
-            velocidade_saida.publish(esquerda)
+    if centro is None:
+        velocidade_saida.publish(esquerda)
+        return None
+    
+    if len(centro) == 0 or len(centro_robo) == 0:
+        velocidade_saida.publish(esquerda)
+        return None
 
-    else:
+    if (centro[0] < centro_robo[0]+limiar) and (centro[0] > centro_robo[0]-limiar):
+        velocidade_saida.publish(frente)
+            
+    elif (centro[0] > centro_robo[0]):
+        velocidade_saida.publish(direita)
+            
+    elif (centro[0] < centro_robo[0]):
         velocidade_saida.publish(esquerda)
 
     return None
