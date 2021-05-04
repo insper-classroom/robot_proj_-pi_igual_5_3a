@@ -20,6 +20,8 @@ from geometry_msgs.msg import Twist, Vector3, Pose, Vector3Stamped
 from nav_msgs.msg import Odometry
 from std_msgs.msg import Header
 
+from biblioteca import *
+
 print("EXECUTE ANTES da 1.a vez: ")
 print("wget https://github.com/Insper/robot21.1/raw/main/projeto/ros_projeto/scripts/MobileNetSSD_deploy.caffemodel")
 print("PARA TER OS PESOS DA REDE NEURAL")
@@ -33,7 +35,15 @@ cv_image = None
 media = []
 centro = []
 atraso = 1.5E9 # 1 segundo e meio. Em nanossegundos
+centro_robo = ()
 
+v = 0.2
+w = math.pi/10.0
+
+zero = Twist(Vector3(0,0,0), Vector3(0,0,0.0))
+frente = Twist(Vector3(v,0,0), Vector3(0,0,0.0))
+direita = Twist(Vector3(0,0,0), Vector3(0,0, -w ))
+esquerda = Twist(Vector3(v,0,0), Vector3(0,0,w))
 
 area = 0.0 # Variavel com a area do maior contorno
 
@@ -55,43 +65,56 @@ tfl = 0
 
 tf_buffer = tf2_ros.Buffer()
 
+def procesa_imagem(bgr):
+    global centro
+    mask = segmenta_linha_amarela(bgr)
+    centro = center_of_mass(mask)
 
-def procesa_imagem(img):
+    cv2.imshow("mask", mask)
+
+    return None
     
 # A função a seguir é chamada sempre que chega um novo frame
 def roda_todo_frame(imagem):
-    print("frame")
     global cv_image
     global media
     global centro
     global resultados
+    global centro_robo
 
-    now = rospy.get_rostime()
-    imgtime = imagem.header.stamp
-    lag = now-imgtime # calcula o lag
-    delay = lag.nsecs
-    # print("delay ", "{:.3f}".format(delay/1.0E9))
-    if delay > atraso and check_delay==True:
-        # Esta logica do delay so' precisa ser usada com robo real e rede wifi 
-        # serve para descartar imagens antigas
-        print("Descartando por causa do delay do frame:", delay)
-        return 
     try:
-        temp_image = bridge.compressed_imgmsg_to_cv2(imagem, "bgr8")
-        # Note que os resultados já são guardados automaticamente na variável
-        # chamada resultados
-        centro, saida_net, resultados =  visao_module.processa(temp_image)        
-        for r in resultados:
-            # print(r) - print feito para documentar e entender
-            # o resultado            
-            pass
+        cv_image = bridge.compressed_imgmsg_to_cv2(imagem, "bgr8")
 
-        # Desnecessário - Hough e MobileNet já abrem janelas
-        cv_image = saida_net.copy()
+        img_copy = cv_image.copy()
+        procesa_imagem(img_copy)
+
+        centro_robo = (img_copy.shape[1]//2, img_copy.shape[0]//2)
+
+        if centro is not None:
+            crosshair(cv_image, centro, 4, (0,0,255))
+
         cv2.imshow("cv_image", cv_image)
         cv2.waitKey(1)
     except CvBridgeError as e:
         print('ex', e)
+
+def segue_linha():
+    if len(centro) != 0 and len(centro_robo) != 0:
+        velocidade_saida.publish(zero)
+
+        if (centro[0] < centro_robo[0]+14)and(centro[0] > centro_robo[0]-14):
+            velocidade_saida.publish(frente)
+        
+        elif (centro[0] > centro_robo[0]):
+            velocidade_saida.publish(direita)
+        
+        elif (centro[0] < centro_robo[0]):
+            velocidade_saida.publish(esquerda)
+
+    else:
+        velocidade_saida.publish(esquerda)
+
+    return None
     
 if __name__=="__main__":
     rospy.init_node("cor")
@@ -109,14 +132,8 @@ if __name__=="__main__":
     tolerancia = 25
 
     try:
-        # Inicializando - por default gira no sentido anti-horário
-        vel = Twist(Vector3(0,0,0), Vector3(0,0,math.pi/10.0))
-        
         while not rospy.is_shutdown():
-            for r in resultados:
-                print(r)
-            
-            velocidade_saida.publish(vel)
+            segue_linha()
             rospy.sleep(0.1)
 
     except rospy.ROSInterruptException:

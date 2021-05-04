@@ -4,9 +4,9 @@
 import cv2
 import numpy as np
 import math
-from scipy import stats 
+# from scipy import stats 
 
-from sklearn.linear_model import LinearRegression
+# from sklearn.linear_model import LinearRegression
 
     
 def segmenta_linha_amarela(bgr):
@@ -17,9 +17,12 @@ def segmenta_linha_amarela(bgr):
     hsv1 = np.array([20, 100, 140], dtype=np.uint8)
     hsv2 = np.array([ 35, 255, 255], dtype=np.uint8)
     res = cv2.inRange(img_hsv, hsv1, hsv2)
-    segmentado=cv2.morphologyEx(res,cv2.MORPH_CLOSE,np.ones((4,4)))
 
-    return segmentado
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(6,6))
+    mask = cv2.morphologyEx( res, cv2.MORPH_OPEN, kernel )
+    mask = cv2.morphologyEx( mask, cv2.MORPH_CLOSE, kernel )  
+
+    return mask
 
 
 def encontrar_contornos(mask):
@@ -36,27 +39,27 @@ def crosshair(img, point, size, color):
     cv2.line(img,(x - size,y),(x + size,y),color,2)
     cv2.line(img,(x,y - size),(x, y + size),color,2)
 
-def encontrar_centro_dos_contornos(img, contornos):
+# def encontrar_centro_dos_contornos(img, contornos):
     
-    lista_X = []
-    lista_Y = []
+#     lista_X = []
+#     lista_Y = []
 
-    for c in contornos:     
-        M = cv2.moments(c)
-        try:
-            cX = int(M["m10"] / M["m00"])
-            cY = int(M["m01"] / M["m00"])
-            p=(cX,cY)
-            crosshair(img, p, 5, (128,128,0))
-            lista_X.append(cX)
-            lista_Y.append(cY)
-        except: pass
+#     for c in contornos:     
+#         M = cv2.moments(c)
+#         try:
+#             cX = int(M["m10"] / M["m00"])
+#             cY = int(M["m01"] / M["m00"])
+#             p=(cX,cY)
+#             crosshair(img, p, 5, (128,128,0))
+#             lista_X.append(cX)
+#             lista_Y.append(cY)
+#         except: pass
         
-    z = np.abs(stats.zscore(lista_X))
-    lista_X = np.delete(lista_X, np.where(z > 2)).tolist()
-    lista_Y = np.delete(lista_Y, np.where(z > 2)).tolist()
+#     z = np.abs(stats.zscore(lista_X))
+#     lista_X = np.delete(lista_X, np.where(z > 2)).tolist()
+#     lista_Y = np.delete(lista_Y, np.where(z > 2)).tolist()
     
-    return img, lista_X, lista_Y
+#     return img, lista_X, lista_Y
 
 
 def desenhar_linha_entre_pontos(img, X, Y, color):
@@ -68,38 +71,38 @@ def desenhar_linha_entre_pontos(img, X, Y, color):
     
     return img
 
-def regressao_por_centro(img, x,y):
-    """Não mude ou renomeie esta função
-        deve receber uma lista de coordenadas XY, e estimar a melhor reta, utilizando o metodo preferir, que passa pelos centros. Retorne a imagem com a reta e os parametros da reta
+# def regressao_por_centro(img, x,y):
+#     """Não mude ou renomeie esta função
+#         deve receber uma lista de coordenadas XY, e estimar a melhor reta, utilizando o metodo preferir, que passa pelos centros. Retorne a imagem com a reta e os parametros da reta
         
-        Dica: cv2.line(img,ponto1,ponto2,color,2) desenha uma linha que passe entre os pontos, mesmo que ponto1 e ponto2 não pertençam a imagem.
-    """
-    img_copy = img.copy()
+#         Dica: cv2.line(img,ponto1,ponto2,color,2) desenha uma linha que passe entre os pontos, mesmo que ponto1 e ponto2 não pertençam a imagem.
+#     """
+#     img_copy = img.copy()
     
-    reg = LinearRegression()
+#     reg = LinearRegression()
 
-    yr = np.array(y)
-    xr = np.array(x).reshape(-1,1)
+#     yr = np.array(y)
+#     xr = np.array(x).reshape(-1,1)
     
-    reg.fit(xr, yr)
+#     reg.fit(xr, yr)
     
-    m, h = reg.coef_, reg.intercept_
+#     m, h = reg.coef_, reg.intercept_
     
-    def regression(x, m, h):
-        y = x*m + h
-        return y
+#     def regression(x, m, h):
+#         y = x*m + h
+#         return y
     
-    y_min = int(regression(min(x), m, h))
-    y_max = int(regression(max(x), m, h))
-    x_min = int(min(x))
-    x_max = int(max(x))
+#     y_min = int(regression(min(x), m, h))
+#     y_max = int(regression(max(x), m, h))
+#     x_min = int(min(x))
+#     x_max = int(max(x))
     
-    p1_reg  = (x_min, y_min)
-    p2_reg = (x_max, y_max)
+#     p1_reg  = (x_min, y_min)
+#     p2_reg = (x_max, y_max)
     
-    cv2.line(img,p1_reg,p2_reg,(0,255,0),4)
+#     cv2.line(img,p1_reg,p2_reg,(0,255,0),4)
 
-    return img, [m, h]
+#     return img, [m, h]
 
 def calcular_angulo_com_vertical(img, lm):
     """Não mude ou renomeie esta função
@@ -118,13 +121,8 @@ def calcular_angulo_com_vertical(img, lm):
 def center_of_mass(mask):
     """ Retorna uma tupla (cx, cy) que desenha o centro do contorno"""
     M = cv2.moments(mask)
-    # Usando a expressão do centróide definida em: https://en.wikipedia.org/wiki/Image_moment
+    if M["m00"] == 0:
+        return None
     cX = int(M["m10"] / M["m00"])
     cY = int(M["m01"] / M["m00"])
     return [int(cX), int(cY)]
-
-def morpho_limpa(mask):
-    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(6,6))
-    mask = cv2.morphologyEx( mask, cv2.MORPH_OPEN, kernel )
-    mask = cv2.morphologyEx( mask, cv2.MORPH_CLOSE, kernel )    
-    return mask
