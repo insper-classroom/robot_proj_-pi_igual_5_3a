@@ -8,6 +8,7 @@ import numpy
 import tf
 import math
 import cv2
+import cv2.aruco as aruco
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import Image, CompressedImage
 from cv_bridge import CvBridge, CvBridgeError
@@ -64,10 +65,17 @@ frame = "camera_link"
 tfl = 0
 
 tf_buffer = tf2_ros.Buffer()
+DIREITA = True
 
 def procesa_imagem(bgr):
     global centro
-    mask = segmenta_linha_amarela(bgr)
+    bgr_copy = bgr.copy()
+    if DIREITA:
+        black = np.array([0,0,0])
+        bgr_copy = cv2.rectangle(bgr_copy, (0,0), ((bgr.shape[1]//2)-100, bgr.shape[0]) , (0,0,255), -1)
+        cv2.imshow("teste", bgr_copy)
+
+    mask = segmenta_linha_amarela(bgr_copy)
     centro = center_of_mass(mask)
 
     cv2.imshow("mask", mask)
@@ -87,8 +95,9 @@ def roda_todo_frame(imagem):
 
         img_copy = cv_image.copy()
         procesa_imagem(img_copy)
-
+        aruco_read(img_copy)
         centro_robo = (img_copy.shape[1]//2, img_copy.shape[0]//2)
+
 
         if centro is not None:
             crosshair(cv_image, centro, 4, (0,0,255))
@@ -97,6 +106,27 @@ def roda_todo_frame(imagem):
         cv2.waitKey(1)
     except CvBridgeError as e:
         print('ex', e)
+
+def aruco_read(img_copy):
+    aruco_dict  = aruco.getPredefinedDictionary(aruco.DICT_6X6_250)
+    # parameters  = aruco.DetectorParameters_create()
+    # parameters.minDistanceToBorder = 0
+    # parameters.adaptiveThreshWinSizeMax = 1000
+    gray = cv2.cvtColor(img_copy, cv2.COLOR_BGR2GRAY)
+    corners, ids, rejectedImgPoints = aruco.detectMarkers(gray, aruco_dict) #, parameters=parameters)
+    if ids is None:
+        return None
+    for i in range(len(ids)):
+        print('ID: {}'.format(ids[i]))
+        
+        for c in corners[i]: 
+            for canto in c:
+                print("Corner {}".format(canto))
+
+    aruco.drawDetectedMarkers(img_copy, corners, ids)
+
+
+    cv2.imshow('frame', img_copy)
 
 def segue_linha():
     limiar = 30
