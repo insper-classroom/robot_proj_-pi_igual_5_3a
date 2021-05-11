@@ -22,6 +22,7 @@ from nav_msgs.msg import Odometry
 from std_msgs.msg import Header
 
 from biblioteca import *
+import cormodule
 
 print("EXECUTE ANTES da 1.a vez: ")
 print("wget https://github.com/Insper/robot21.1/raw/main/projeto/ros_projeto/scripts/MobileNetSSD_deploy.caffemodel")
@@ -37,6 +38,8 @@ media = []
 centro = []
 atraso = 1.5E9 # 1 segundo e meio. Em nanossegundos
 centro_robo = ()
+media_creep = []
+maior_area = 0
 
 v = 0.1
 w = math.pi/20.0
@@ -47,6 +50,8 @@ direita = Twist(Vector3(0,0,0), Vector3(0,0, -w ))
 esquerda = Twist(Vector3(0,0,0), Vector3(0,0,w))
 
 area = 0.0 # Variavel com a area do maior contorno
+
+goal1 = ("blue", 22, "dog")
 
 # Só usar se os relógios ROS da Raspberry e do Linux desktop estiverem sincronizados. 
 # Descarta imagens que chegam atrasadas demais
@@ -66,6 +71,7 @@ tfl = 0
 
 tf_buffer = tf2_ros.Buffer()
 DIREITA = True
+
 
 def procesa_imagem(bgr):
     global centro
@@ -89,20 +95,26 @@ def roda_todo_frame(imagem):
     global centro
     global resultados
     global centro_robo
+    global media_creep
+    global maior_area
 
     try:
         cv_image = bridge.compressed_imgmsg_to_cv2(imagem, "bgr8")
 
         img_copy = cv_image.copy()
+        img_copy_aruco = cv_image.copy()
+        img_copy_cor = cv_image.copy()
         procesa_imagem(img_copy)
-        aruco_read(img_copy)
+        media_creep, maior_area, frame =  cormodule.identifica_cor(img_copy_cor, goal1[0])
+        aruco_read(img_copy_aruco)
         centro_robo = (img_copy.shape[1]//2, img_copy.shape[0]//2)
-
+        print("aquiii{}" .format(media_creep))
 
         if centro is not None:
             crosshair(cv_image, centro, 4, (0,0,255))
 
         cv2.imshow("cv_image", cv_image)
+        cv2.imshow("cor", frame)
         cv2.waitKey(1)
     except CvBridgeError as e:
         print('ex', e)
@@ -114,14 +126,14 @@ def aruco_read(img_copy):
     # parameters.adaptiveThreshWinSizeMax = 1000
     gray = cv2.cvtColor(img_copy, cv2.COLOR_BGR2GRAY)
     corners, ids, rejectedImgPoints = aruco.detectMarkers(gray, aruco_dict) #, parameters=parameters)
-    if ids is None:
-        return None
-    for i in range(len(ids)):
-        print('ID: {}'.format(ids[i]))
+    # if ids is None:
+    #     return None
+    # for i in range(len(ids)):
+    #     print('ID: {}'.format(ids[i]))
         
-        for c in corners[i]: 
-            for canto in c:
-                print("Corner {}".format(canto))
+    #     for c in corners[i]: 
+    #         for canto in c:
+    #             print("Corner {}".format(canto))
 
     aruco.drawDetectedMarkers(img_copy, corners, ids)
 
@@ -129,7 +141,7 @@ def aruco_read(img_copy):
     cv2.imshow('frame', img_copy)
 
 def segue_linha():
-    limiar = 30
+    limiar = 50
     velocidade_saida.publish(zero)
 
     if centro is None:
@@ -151,6 +163,29 @@ def segue_linha():
 
     return None
     
+def choca_creep():
+    limiar = 50
+    velocidade_saida.publish(zero)
+
+    if media_creep is None:
+        velocidade_saida.publish(esquerda)
+        return None
+    
+    if len(media_creep) == 0 or len(centro_robo) == 0:
+        velocidade_saida.publish(esquerda)
+        return None
+
+    if (media_creep[0] < centro_robo[0]+limiar) and (media_creep[0] > centro_robo[0]-limiar):
+        velocidade_saida.publish(frente)
+            
+    elif (media_creep[0] > centro_robo[0]):
+        velocidade_saida.publish(direita)
+            
+    elif (media_creep[0] < centro_robo[0]):
+        velocidade_saida.publish(esquerda)
+
+    return None
+
 if __name__=="__main__":
     rospy.init_node("cor")
 
@@ -168,7 +203,8 @@ if __name__=="__main__":
 
     try:
         while not rospy.is_shutdown():
-            segue_linha()
+            choca_creep()
+            # segue_linha()
             rospy.sleep(0.1)
 
     except rospy.ROSInterruptException:
