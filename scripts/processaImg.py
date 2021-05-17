@@ -19,14 +19,16 @@ def procesa_imagem_pista(bgr):
 	""" 
 
     bgr_copy = bgr.copy()
+    # image = cv2.rectangle(image, start_point, end_point, color, thickness)
     bgr_copy = cv2.rectangle(bgr_copy, (0,0), ((bgr.shape[1]//2)-100, bgr.shape[0]) , (0,0,255), -1)
+    bgr_copy = cv2.rectangle(bgr_copy, ((bgr.shape[1]//2) + 175,0), (bgr.shape[1], bgr.shape[0]) , (0,0,255), -1)
 
     mask = bibliot.segmenta_linha_amarela(bgr_copy)
     centro_pista = bibliot.center_of_mass(mask)
 
-    cv2.imshow("mask", mask)
+    
 
-    return centro_pista
+    return centro_pista, bgr_copy, mask
 
 def aruco_read(img_copy):
     aruco_dict  = aruco.getPredefinedDictionary(aruco.DICT_6X6_250)

@@ -46,7 +46,7 @@ ranges = []
 
 area = 0.0 # Variavel com a area do maior contorno
 
-goal1 = ("blue", 22, "dog")
+goal1 = ("orange", 22, "dog")
 
 # Só usar se os relógios ROS da Raspberry e do Linux desktop estiverem sincronizados. 
 # Descarta imagens que chegam atrasadas demais
@@ -89,12 +89,14 @@ def roda_todo_frame(imagem):
         img_copy_aruco = cv_image.copy()
         img_copy_cor = cv_image.copy()
 
+        centro_pista, antolho, mask = procImg.procesa_imagem_pista(img_copy_pista)
+        # cv2.imshow("antolho", antolho)
+        cv2.imshow("mask", mask)
 
-        centro_pista = procImg.procesa_imagem_pista(img_copy_pista)
         media_creep, maior_area, frame =  cormodule.identifica_cor(img_copy_cor, goal1[0])
 
         aruco_imshow = procImg.aruco_read(img_copy_aruco)
-        cv2.imshow('frame', aruco_imshow)
+        # cv2.imshow('frame', aruco_imshow)
 
         centro_robo = (img_copy.shape[1]//2, img_copy.shape[0]//2)
 
