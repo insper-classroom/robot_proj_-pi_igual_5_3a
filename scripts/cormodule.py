@@ -30,8 +30,8 @@ def identifica_cor(frame, cor):
     
     # Primeira cor = menor, segunda = maior:
     cores = {"blue": [np.array([80, 50, 100]), np.array([105, 255, 255])],
-            "orange": [np.array([114, 50, 100]), np.array([126, 255, 255])],
-            "pink": [np.array([114, 50, 100]), np.array([126, 255, 255])]
+            "green": [np.array([45, 50, 100]), np.array([70, 255, 255])],
+            "orange": [np.array([0, 180, 180]), np.array([20, 255, 255])]
             }
 
     cor_menor = cores[cor][0]
