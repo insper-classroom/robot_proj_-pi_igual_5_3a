@@ -162,7 +162,8 @@ if __name__=="__main__":
     try:
         while not rospy.is_shutdown():
             main()
-            rospy.sleep(0.1)
+            rospy.Rate(20).sleep()
+            # rospy.sleep(0.1)
 
     except rospy.ROSInterruptException:
         print("Ocorreu uma exceção com o rospy")

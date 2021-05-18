@@ -24,7 +24,7 @@ from biblioteca import *
 import cormodule
 import visao_module
 
-v = 0.125
+v = 0.1
 w = math.pi/20.0
 
 zero = Twist(Vector3(0,0,0), Vector3(0,0,0.0))
@@ -35,7 +35,7 @@ esquerda = Twist(Vector3(0,0,0), Vector3(0,0,w))
 
 def segue_linha(velocidade_saida, centro_pista, centro_robo):
 
-    limiar = 40
+    limiar = 50
     velocidade_saida.publish(zero)
 
     if centro_pista is None:
