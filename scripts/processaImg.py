@@ -45,8 +45,7 @@ def aruco_read(img_copy):
     #     for c in corners[i]: 
     #         for canto in c:
     #             print("Corner {}".format(canto))
-
     aruco.drawDetectedMarkers(img_copy, corners, ids)
 
-    return img_copy
+    return img_copy, ids
     

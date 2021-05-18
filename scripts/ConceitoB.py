@@ -22,7 +22,7 @@ from std_msgs.msg import Header
 
 from biblioteca import *
 import cormodule
-import ConceitoC_states
+import ConceitoB_states
 import processaImg as procImg
 
 print("EXECUTE ANTES da 1.a vez: ")
@@ -43,10 +43,11 @@ media_creep = []
 maior_area = 0
 estado = 1
 ranges = []
+ids = []
 
 area = 0.0 # Variavel com a area do maior contorno
 
-goal1 = ("orange", 22, "dog")
+goal1 = ("blue", 22, "dog")
 
 # Só usar se os relógios ROS da Raspberry e do Linux desktop estiverem sincronizados. 
 # Descarta imagens que chegam atrasadas demais
@@ -80,6 +81,7 @@ def roda_todo_frame(imagem):
     global centro_robo
     global media_creep
     global maior_area
+    global ids
 
     try:
         cv_image = bridge.compressed_imgmsg_to_cv2(imagem, "bgr8")
@@ -95,8 +97,8 @@ def roda_todo_frame(imagem):
 
         media_creep, maior_area, frame =  cormodule.identifica_cor(img_copy_cor, goal1[0])
 
-        aruco_imshow, ids, corners = procImg.aruco_read(img_copy_aruco)
-        # cv2.imshow('frame', aruco_imshow)
+        aruco_imshow, ids = procImg.aruco_read(img_copy_aruco)
+        cv2.imshow('frame', aruco_imshow)
 
         centro_robo = (img_copy.shape[1]//2, img_copy.shape[0]//2)
 
@@ -122,14 +124,14 @@ def main():
         print(middle_sensor_mean, ranges[0])
     except:
         pass
-
-    if maior_area > 1300:
-        estado2 = True
-        try:
-            if middle_sensor_mean <= 0.2:
-                estado2_trava = True
-        except:
-            pass
+    if ids is not None:
+        if maior_area > 1300 and goal1[1] in ids:
+            estado2 = True
+            try:
+                if middle_sensor_mean <= 0.2:
+                    estado2_trava = True
+            except:
+                pass
 
         
     if estado2 == False or estado2_trava == True:
@@ -155,8 +157,8 @@ if __name__=="__main__":
     tolerancia = 25
 
     maquina_estados = {
-        1: ConceitoC_states.segue_linha,
-        2: ConceitoC_states.choca_creep
+        1: ConceitoB_states.segue_linha,
+        2: ConceitoB_states.choca_creep
     }
 
     try:
