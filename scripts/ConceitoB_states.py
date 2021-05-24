@@ -16,6 +16,7 @@ from tf import transformations
 from tf import TransformerROS
 import tf2_ros
 from geometry_msgs.msg import Twist, Vector3, Pose, Vector3Stamped
+from std_msgs.msg import Float64
 
 from nav_msgs.msg import Odometry
 from std_msgs.msg import Header
@@ -23,6 +24,7 @@ from std_msgs.msg import Header
 from biblioteca import *
 import cormodule
 import visao_module
+import time
 
 v = 0.1
 w = math.pi/20.0
@@ -58,27 +60,75 @@ def segue_linha(velocidade_saida, centro_pista, centro_robo):
     return None
 
 def choca_creep(velocidade_saida, media_creep, centro_robo):
-    frente_choca = Twist(Vector3(0.1,0,0), Vector3(0,0,0.0))
+    frente_choca = Twist(Vector3(v/2,0,0), Vector3(0,0,0.0))
+    direita_choca = Twist(Vector3(0,0,0), Vector3(0,0, -w/2 ))
+    esquerda_choca = Twist(Vector3(0,0,0), Vector3(0,0,w/2))
 
-    limiar = 50
+    limiar = 30
     velocidade_saida.publish(zero)
 
     if media_creep is None:
-        velocidade_saida.publish(esquerda)
+        velocidade_saida.publish(esquerda_choca)
         return None
     
     if len(media_creep) == 0 or len(centro_robo) == 0:
-        velocidade_saida.publish(esquerda)
+        velocidade_saida.publish(esquerda_choca)
         return None
 
     if (media_creep[0] < centro_robo[0]+limiar) and (media_creep[0] > centro_robo[0]-limiar):
         velocidade_saida.publish(frente_choca)
             
     elif (media_creep[0] > centro_robo[0]):
-        velocidade_saida.publish(direita)
+        velocidade_saida.publish(direita_choca)
             
     elif (media_creep[0] < centro_robo[0]):
-        velocidade_saida.publish(esquerda)
+        velocidade_saida.publish(esquerda_choca)
 
     return None
+
+def pega_creep(velocidade_saida, braco_publisher, garra_publisher, media_creep, centro_robo, middle_sensor_mean):
+    frente_garra = Twist(Vector3(v/2,0,0), Vector3(0,0,0.0))
+    frente_devagar = Twist(Vector3(v/3,0,0), Vector3(0,0,0.0))
+
+    direita_garra = Twist(Vector3(0,0,0), Vector3(0,0, -w/2 ))
+    esquerda_garra = Twist(Vector3(0,0,0), Vector3(0,0,w/2))
+    estado_inicial = True
+    velocidade_saida.publish(zero)
+    
+    """
+    POSICOES DA GARRA:
+    Garra recolhida: -1
+    Garra 45 graus: -0.5
+    Garra para frente: 0
+    Garra levantada: 1.5
+
+    Pinça fechada: 0
+    Pinça aberta: -1
+    """
+    if estado_inicial == True:
+        pos_braco = Float64()
+        pos_braco.data = -0.5
+        pos_garra = Float64()
+        pos_garra.data = -1
+
+        braco_publisher.publish(pos_braco)
+        garra_publisher.publish(pos_garra)
+        estado_inicial = False
+
+
+    if middle_sensor_mean >= 0.2:
+        velocidade_saida.publish(frente_devagar)
+    else:
+        pos_garra = Float64()
+        pos_garra.data = 0
+        pos_braco = Float64()
+        pos_braco.data = 1.5
+
+        garra_publisher.publish(pos_garra)
+        rospy.sleep(1)
+        braco_publisher.publish(pos_braco)
+        return True
+        
+
+    return False
 

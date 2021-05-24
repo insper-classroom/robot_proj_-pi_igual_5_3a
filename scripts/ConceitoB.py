@@ -16,6 +16,7 @@ from tf import transformations
 from tf import TransformerROS
 import tf2_ros
 from geometry_msgs.msg import Twist, Vector3, Pose, Vector3Stamped
+from std_msgs.msg import Float64
 
 from nav_msgs.msg import Odometry
 from std_msgs.msg import Header
@@ -47,7 +48,7 @@ ids = []
 
 area = 0.0 # Variavel com a area do maior contorno
 
-goal1 = ("blue", 22, "dog")
+goal1 = ("blue", 12, "dog")
 
 # Só usar se os relógios ROS da Raspberry e do Linux desktop estiverem sincronizados. 
 # Descarta imagens que chegam atrasadas demais
@@ -72,6 +73,7 @@ def scaneou(dado):
     global ranges
 
     ranges = np.array(dado.ranges).round(decimals=2)
+    
 
 def roda_todo_frame(imagem):
     global cv_image
@@ -98,14 +100,14 @@ def roda_todo_frame(imagem):
         media_creep, maior_area, frame =  cormodule.identifica_cor(img_copy_cor, goal1[0])
 
         aruco_imshow, ids = procImg.aruco_read(img_copy_aruco)
-        cv2.imshow('frame', aruco_imshow)
+        cv2.imshow('aruco', aruco_imshow)
 
         centro_robo = (img_copy.shape[1]//2, img_copy.shape[0]//2)
 
         if centro_pista is not None:
-            crosshair(cv_image, centro_pista, 4, (0,0,255))
+            crosshair(frame, centro_pista, 4, (0,0,255))
 
-        cv2.imshow("cv_image", cv_image)
+        # cv2.imshow("cv_image", cv_image)
         cv2.imshow("cor", frame)
         cv2.waitKey(1)
     except CvBridgeError as e:
@@ -113,11 +115,25 @@ def roda_todo_frame(imagem):
 
 estado2 = False
 estado2_trava = False
+estado3 = False
+estado3_trava = False
 
 def main():
     global ranges
+    global estado3
     global estado2
     global estado2_trava
+    global estado3_trava
+
+    # try:
+    #     middle_sensor_mean = (ranges[355] + ranges[5])/2
+    #     print(middle_sensor_mean, ranges[0])
+    # except:
+    #     pass
+
+    # global estado2
+    # global estado2_trava
+    
 
     try:
         middle_sensor_mean = (ranges[355] + ranges[5])/2
@@ -128,17 +144,26 @@ def main():
         if maior_area > 1300 and goal1[1] in ids:
             estado2 = True
             try:
-                if middle_sensor_mean <= 0.2:
+                if middle_sensor_mean <= 0.3:
                     estado2_trava = True
+                    estado3 = True
+    
+                    
             except:
                 pass
 
         
-    if estado2 == False or estado2_trava == True:
+    if estado2 == False or (estado2_trava == True and estado3_trava == True):
         maquina_estados[1](velocidade_saida, centro_pista, centro_robo)
     
     if estado2 == True and estado2_trava == False:
         maquina_estados[2](velocidade_saida, media_creep, centro_robo)
+
+    if estado2_trava == True and estado3_trava == False:
+        estado3_trava = maquina_estados[3](velocidade_saida, braco_publisher, garra_publisher, media_creep, centro_robo, middle_sensor_mean)
+
+
+    
     
 
 if __name__=="__main__":
@@ -152,13 +177,16 @@ if __name__=="__main__":
     print("Usando ", topico_imagem)
 
     velocidade_saida = rospy.Publisher("/cmd_vel", Twist, queue_size = 1)
+    braco_publisher = rospy.Publisher("/joint1_position_controller/command", Float64, queue_size = 1)
+    garra_publisher = rospy.Publisher("/joint2_position_controller/command", Float64, queue_size = 1)
 
     tfl = tf2_ros.TransformListener(tf_buffer) #conversao do sistema de coordenadas 
     tolerancia = 25
 
     maquina_estados = {
         1: ConceitoB_states.segue_linha,
-        2: ConceitoB_states.choca_creep
+        2: ConceitoB_states.choca_creep,
+        3: ConceitoB_states.pega_creep
     }
 
     try:
