@@ -87,13 +87,13 @@ def choca_creep(velocidade_saida, media_creep, centro_robo):
     return None
 
 def pega_creep(velocidade_saida, braco_publisher, garra_publisher, media_creep, centro_robo, middle_sensor_mean):
-    frente_garra = Twist(Vector3(v/2,0,0), Vector3(0,0,0.0))
-    frente_devagar = Twist(Vector3(v/3,0,0), Vector3(0,0,0.0))
-
-    direita_garra = Twist(Vector3(0,0,0), Vector3(0,0, -w/2 ))
-    esquerda_garra = Twist(Vector3(0,0,0), Vector3(0,0,w/2))
+    frente_devagar = Twist(Vector3(v/4,0,0), Vector3(0,0,0.0))
+    direita_devagar = Twist(Vector3(0,0,0), Vector3(0,0, -w/4 ))
+    esquerda_devagar = Twist(Vector3(0,0,0), Vector3(0,0,w/4))
     estado_inicial = True
+    
     velocidade_saida.publish(zero)
+    limiar = 15
     
     """
     POSICOES DA GARRA:
@@ -107,7 +107,7 @@ def pega_creep(velocidade_saida, braco_publisher, garra_publisher, media_creep, 
     """
     if estado_inicial == True:
         pos_braco = Float64()
-        pos_braco.data = -0.5
+        pos_braco.data = -0.25
         pos_garra = Float64()
         pos_garra.data = -1
 
@@ -116,8 +116,28 @@ def pega_creep(velocidade_saida, braco_publisher, garra_publisher, media_creep, 
         estado_inicial = False
 
 
-    if middle_sensor_mean >= 0.2:
-        velocidade_saida.publish(frente_devagar)
+    if middle_sensor_mean >= 0.18:
+        velocidade_saida.publish(zero)
+
+        if media_creep is None:
+            velocidade_saida.publish(esquerda_devagar)
+            return False
+        
+        if len(media_creep) == 0 or len(centro_robo) == 0:
+            velocidade_saida.publish(esquerda_devagar)
+            return False
+
+        if (media_creep[0] < centro_robo[0]+limiar) and (media_creep[0] > centro_robo[0]-limiar):
+            velocidade_saida.publish(frente_devagar)
+                
+        elif (media_creep[0] > centro_robo[0]):
+            velocidade_saida.publish(direita_devagar)
+                
+        elif (media_creep[0] < centro_robo[0]):
+            velocidade_saida.publish(esquerda_devagar)
+
+        return False
+        
     else:
         pos_garra = Float64()
         pos_garra.data = 0
@@ -129,6 +149,4 @@ def pega_creep(velocidade_saida, braco_publisher, garra_publisher, media_creep, 
         braco_publisher.publish(pos_braco)
         return True
         
-
-    return False
 
