@@ -46,7 +46,7 @@ ranges = []
 
 area = 0.0 # Variavel com a area do maior contorno
 
-goal1 = ("orange", 22, "dog")
+goal1 = ("orange", 11, "cow")
 
 # Só usar se os relógios ROS da Raspberry e do Linux desktop estiverem sincronizados. 
 # Descarta imagens que chegam atrasadas demais
@@ -95,15 +95,12 @@ def roda_todo_frame(imagem):
 
         media_creep, maior_area, frame =  cormodule.identifica_cor(img_copy_cor, goal1[0])
 
-        aruco_imshow, ids, corners = procImg.aruco_read(img_copy_aruco)
-        # cv2.imshow('frame', aruco_imshow)
-
         centro_robo = (img_copy.shape[1]//2, img_copy.shape[0]//2)
 
         if centro_pista is not None:
-            crosshair(cv_image, centro_pista, 4, (0,0,255))
+            crosshair(frame, centro_pista, 4, (0,0,255))
 
-        cv2.imshow("cv_image", cv_image)
+        # cv2.imshow("cv_image", cv_image)
         cv2.imshow("cor", frame)
         cv2.waitKey(1)
     except CvBridgeError as e:
@@ -163,7 +160,6 @@ if __name__=="__main__":
         while not rospy.is_shutdown():
             main()
             rospy.Rate(50).sleep()
-            # rospy.sleep(0.1)
 
     except rospy.ROSInterruptException:
         print("Ocorreu uma exceção com o rospy")
