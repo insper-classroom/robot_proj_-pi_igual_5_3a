@@ -8,8 +8,6 @@ Nome dos integrantes:
 
 * Arthur Gomes Chieppe
 * Francisco Augusto Buzolin Vasconcellos da Costa
-* Gabriel Vilaça
-
 
 Visite sempre o enunciado abaixo para atualizacões: 
 
