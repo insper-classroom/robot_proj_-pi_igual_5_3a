@@ -24,26 +24,27 @@ from biblioteca import *
 import cormodule
 import visao_module
 
-v = 0.1
+v = 0.15
 w = math.pi/20.0
 
 zero = Twist(Vector3(0,0,0), Vector3(0,0,0.0))
 frente = Twist(Vector3(v,0,0), Vector3(0,0,0.0))
-direita = Twist(Vector3(0,0,0), Vector3(0,0, -w ))
-esquerda = Twist(Vector3(0,0,0), Vector3(0,0,w))
+direita = Twist(Vector3(v/3,0,0), Vector3(0,0, 1.5*-w))
+esquerda = Twist(Vector3(v/3,0,0), Vector3(0,0,1.5*w))
+gira_parado = Twist(Vector3(0,0,0), Vector3(0,0,-w))
 
 
 def segue_linha(velocidade_saida, centro_pista, centro_robo):
-
-    limiar = 50
+    
+    limiar = 40
     velocidade_saida.publish(zero)
 
     if centro_pista is None:
-        velocidade_saida.publish(esquerda)
+        velocidade_saida.publish(gira_parado)
         return None
     
     if len(centro_pista) == 0 or len(centro_robo) == 0:
-        velocidade_saida.publish(esquerda)
+        velocidade_saida.publish(gira_parado)
         return None
 
     if (centro_pista[0] < centro_robo[0]+limiar) and (centro_pista[0] > centro_robo[0]-limiar):
@@ -58,27 +59,29 @@ def segue_linha(velocidade_saida, centro_pista, centro_robo):
     return None
 
 def choca_creep(velocidade_saida, media_creep, centro_robo):
-    frente_choca = Twist(Vector3(0.1,0,0), Vector3(0,0,0.0))
+    frente_choca = Twist(Vector3(v/4,0,0), Vector3(0,0,0.0))
+    direita_choca = Twist(Vector3(0,0,0), Vector3(0,0,-w/2 ))
+    esquerda_choca = Twist(Vector3(0,0,0), Vector3(0,0,w/2))
 
-    limiar = 50
+    limiar = 30
     velocidade_saida.publish(zero)
 
     if media_creep is None:
-        velocidade_saida.publish(esquerda)
+        velocidade_saida.publish(direita_choca)
         return None
     
     if len(media_creep) == 0 or len(centro_robo) == 0:
-        velocidade_saida.publish(esquerda)
+        velocidade_saida.publish(direita_choca)
         return None
 
     if (media_creep[0] < centro_robo[0]+limiar) and (media_creep[0] > centro_robo[0]-limiar):
         velocidade_saida.publish(frente_choca)
             
     elif (media_creep[0] > centro_robo[0]):
-        velocidade_saida.publish(direita)
+        velocidade_saida.publish(direita_choca)
             
     elif (media_creep[0] < centro_robo[0]):
-        velocidade_saida.publish(esquerda)
+        velocidade_saida.publish(esquerda_choca)
 
     return None
 
