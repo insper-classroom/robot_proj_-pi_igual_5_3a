@@ -11,11 +11,16 @@ import cormodule as cormod
 
 def procesa_imagem_pista(bgr):
     """
-	Função que processa a imagem da pista.
-	Args:
-        bgr: Imagem obtida pelo robo
-	Returns:
-		centro_pista: Coordenadas do centro de massa da linha amarela.
+	Função que processa uma imagem, buscando a pista.
+    Retorna:
+        centro_pista: coordenadas do centro de massa da linha 
+        amarela, que sao as coordenadas do centro da pista
+
+        bgr_copy: copia da imagem da camera do robo, com
+        retangulos desenhados por cima, que servem como antolhos,
+        para o robo. (Usado para fins de teste)
+
+        mask: mascara das linhas amarelas.
 	""" 
 
     bgr_copy = bgr.copy()
@@ -25,13 +30,23 @@ def procesa_imagem_pista(bgr):
 
     mask = bibliot.segmenta_linha_amarela(bgr_copy)
     centro_pista = bibliot.center_of_mass(mask)
-    # cv2.imshow("antolho", bgr_copy)
 
     
 
     return centro_pista, bgr_copy, mask
 
 def aruco_read(img_copy):
+    """
+	Função que processa uma imagem, buscando os QR codes.
+	Retorna:
+		img_copy: copia da imagem da camera do robo, com
+        o contorno dos QRcodes desenhados por cima, e com os IDs dos 
+        QRcodes sobrescritos na imagem.
+
+        ids: lista dos IDs dos QRcodes, que a funcao esta
+        detectando na imagem.
+	""" 
+
     aruco_dict  = aruco.getPredefinedDictionary(aruco.DICT_6X6_250)
     # parameters  = aruco.DetectorParameters_create()
     # parameters.minDistanceToBorder = 0

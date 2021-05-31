@@ -36,6 +36,11 @@ esquerda = Twist(Vector3(0,0,0), Vector3(0,0,w))
 
 
 def segue_linha(velocidade_saida, centro_pista, centro_robo):
+    """
+	Funcao com o objetivo de fazer com que o robo siga a linha amarela
+    e permaneca na pista. Sempre retorna None e tem como objetivo 
+    definir o movimento do robo.
+	"""
 
     limiar = 50
     velocidade_saida.publish(zero)
@@ -60,6 +65,12 @@ def segue_linha(velocidade_saida, centro_pista, centro_robo):
     return None
 
 def choca_creep(velocidade_saida, media_creep, centro_robo):
+    """
+	Funcao com o objetivo de fazer com que o robo se vire em
+    direcao ao creeper e se aproxime dele. Sempre retorna None 
+    e tem como objetivo definir o movimento do robo.
+	"""
+
     frente_choca = Twist(Vector3(v/2,0,0), Vector3(0,0,0.0))
     direita_choca = Twist(Vector3(0,0,0), Vector3(0,0, -w/2 ))
     esquerda_choca = Twist(Vector3(0,0,0), Vector3(0,0,w/2))
@@ -87,11 +98,28 @@ def choca_creep(velocidade_saida, media_creep, centro_robo):
     return None
 
 def pega_creep(velocidade_saida, braco_publisher, garra_publisher, media_creep, centro_robo, middle_sensor_mean):
+    """
+	Funcao com o objetivo de fazer com que o robo use a garra e o braco
+    para pegar o creeper. Opera na seguinte ordem:
+    1. Abre a garra e levanta o braco do robo;
+    2. Robo se aproxima, precisamente, do creeper;
+    3. Feche a garra do robo, equanto ele segura o creeper,
+    e levanta mais o braco.
+
+    Retorna True ou False.
+
+    Retorna False: Equanto nao realiza o fechamento da garra e levantamento do 
+    braco, para garantir que o robo permaneca no estado de pegar o creeper. 
+
+    Retorna True: Quando o robo fecha a garra e levanta o creeper, para que ele 
+    saia do estado de pegar o creeper e possa voltar ao estado de seguir a pista.
+	"""
+
     frente_devagar = Twist(Vector3(v/4,0,0), Vector3(0,0,0.0))
     direita_devagar = Twist(Vector3(0,0,0), Vector3(0,0, -w/4 ))
     esquerda_devagar = Twist(Vector3(0,0,0), Vector3(0,0,w/4))
     estado_inicial = True
-    
+
     velocidade_saida.publish(zero)
     limiar = 15
     
