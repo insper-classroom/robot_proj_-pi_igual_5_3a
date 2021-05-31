@@ -135,7 +135,7 @@ def pega_creep(velocidade_saida, braco_publisher, garra_publisher, media_creep, 
     """
     if estado_inicial == True:
         pos_braco = Float64()
-        pos_braco.data = -0.25
+        pos_braco.data = -0.35
         pos_garra = Float64()
         pos_garra.data = -1
 

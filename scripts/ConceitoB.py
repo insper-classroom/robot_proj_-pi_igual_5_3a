@@ -48,7 +48,7 @@ ids = []
 
 area = 0.0 # Variavel com a area do maior contorno
 
-goal1 = ("blue", 12, "dog")
+goal1 = ("orange", 11, "cow")
 
 # Só usar se os relógios ROS da Raspberry e do Linux desktop estiverem sincronizados. 
 # Descarta imagens que chegam atrasadas demais
