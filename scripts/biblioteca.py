@@ -4,12 +4,12 @@
 import cv2
 import numpy as np
 import math
-# from scipy import stats 
-
-# from sklearn.linear_model import LinearRegression
 
     
 def segmenta_linha_amarela(bgr):
+    """
+	Função que segmenta a linha amarela, com base em valores hsv.
+	""" 
     
     img_bgr = bgr.copy()
     img_hsv = cv2.cvtColor(img_bgr, cv2.COLOR_BGR2HSV)
@@ -26,6 +26,9 @@ def segmenta_linha_amarela(bgr):
 
 
 def encontrar_contornos(mask):
+    """
+	Função que encontra contornos.
+	""" 
     contornos, arvore = cv2.findContours(mask.copy(), cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     return contornos
    
@@ -39,29 +42,6 @@ def crosshair(img, point, size, color):
     cv2.line(img,(x - size,y),(x + size,y),color,2)
     cv2.line(img,(x,y - size),(x, y + size),color,2)
 
-# def encontrar_centro_dos_contornos(img, contornos):
-    
-#     lista_X = []
-#     lista_Y = []
-
-#     for c in contornos:     
-#         M = cv2.moments(c)
-#         try:
-#             cX = int(M["m10"] / M["m00"])
-#             cY = int(M["m01"] / M["m00"])
-#             p=(cX,cY)
-#             crosshair(img, p, 5, (128,128,0))
-#             lista_X.append(cX)
-#             lista_Y.append(cY)
-#         except: pass
-        
-#     z = np.abs(stats.zscore(lista_X))
-#     lista_X = np.delete(lista_X, np.where(z > 2)).tolist()
-#     lista_Y = np.delete(lista_Y, np.where(z > 2)).tolist()
-    
-#     return img, lista_X, lista_Y
-
-
 def desenhar_linha_entre_pontos(img, X, Y, color):
     """Não mude ou renomeie esta função
         deve receber uma lista de coordenadas XY, e retornar uma imagem com uma linha entre os centros EM SEQUENCIA do mais proximo.
@@ -71,38 +51,6 @@ def desenhar_linha_entre_pontos(img, X, Y, color):
     
     return img
 
-# def regressao_por_centro(img, x,y):
-#     """Não mude ou renomeie esta função
-#         deve receber uma lista de coordenadas XY, e estimar a melhor reta, utilizando o metodo preferir, que passa pelos centros. Retorne a imagem com a reta e os parametros da reta
-        
-#         Dica: cv2.line(img,ponto1,ponto2,color,2) desenha uma linha que passe entre os pontos, mesmo que ponto1 e ponto2 não pertençam a imagem.
-#     """
-#     img_copy = img.copy()
-    
-#     reg = LinearRegression()
-
-#     yr = np.array(y)
-#     xr = np.array(x).reshape(-1,1)
-    
-#     reg.fit(xr, yr)
-    
-#     m, h = reg.coef_, reg.intercept_
-    
-#     def regression(x, m, h):
-#         y = x*m + h
-#         return y
-    
-#     y_min = int(regression(min(x), m, h))
-#     y_max = int(regression(max(x), m, h))
-#     x_min = int(min(x))
-#     x_max = int(max(x))
-    
-#     p1_reg  = (x_min, y_min)
-#     p2_reg = (x_max, y_max)
-    
-#     cv2.line(img,p1_reg,p2_reg,(0,255,0),4)
-
-#     return img, [m, h]
 
 def calcular_angulo_com_vertical(img, lm):
     """Não mude ou renomeie esta função
